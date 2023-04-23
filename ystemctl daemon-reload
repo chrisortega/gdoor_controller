@@ -1,0 +1,16 @@
+[0;1;31mWarning:[0m The unit file, source configuration file or drop-ins of uwsgi.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+[0;1;31m●[0m uwsgi.service - uWSGI service
+     Loaded: loaded (/etc/systemd/system/uwsgi.service; enabled; vendor preset: enabled)
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Fri 2023-04-21 20:33:49 HDT; 12s ago
+    Process: 4973 ExecStart=/usr/bin/uwsgi --ini /var/www/example/config-uwsgi.ini [0;1;31m(code=exited, status=203/EXEC)[0m
+   Main PID: 4973 (code=exited, status=203/EXEC)
+        CPU: 8ms
+
+Apr 21 20:33:48 raspberrypi systemd[1]: [0;1;39m[0;1;31m[0;1;39muwsgi.service: Main process exited, code=exited, status=203/EXEC[0m
+Apr 21 20:33:48 raspberrypi systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185muwsgi.service: Failed with result 'exit-code'.[0m
+Apr 21 20:33:48 raspberrypi systemd[1]: [0;1;31m[0;1;39m[0;1;31mFailed to start uWSGI service.[0m
+Apr 21 20:33:49 raspberrypi systemd[1]: uwsgi.service: Scheduled restart job, restart counter is at 5.
+Apr 21 20:33:49 raspberrypi systemd[1]: Stopped uWSGI service.
+Apr 21 20:33:49 raspberrypi systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185muwsgi.service: Start request repeated too quickly.[0m
+Apr 21 20:33:49 raspberrypi systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185muwsgi.service: Failed with result 'exit-code'.[0m
+Apr 21 20:33:49 raspberrypi systemd[1]: [0;1;31m[0;1;39m[0;1;31mFailed to start uWSGI service.[0m

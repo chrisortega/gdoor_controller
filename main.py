@@ -1,48 +1,26 @@
-import RPi.GPIO as GPIO
-import time
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+from flask import Flask, request, jsonify, render_template
+import json
+from door import GdoorControl
 
-class GdoorControl:
-    def __init__(self):
-        self.door_state_gpio = {
-            "open":17,
-            "close":18,
-            "sensor_open":4,
-            "sensor_close":5
-        }
+app = Flask(__name__)
 
-    def turn_off_pin(self,gpio = 17):
-        led_pin = gpio
-        GPIO.setup(led_pin, GPIO.OUT)
-        GPIO.output(led_pin, GPIO.HIGH)
-        
+app.debug = True
+@app.route('/')
+def home():
+    return render_template('index.html', test = 1)
 
-    def turn_on_pin(self,gpio = 17):
-        led_pin = gpio
-        GPIO.setup(led_pin, GPIO.OUT)
-        GPIO.output(led_pin, GPIO.LOW)
-
-    def pin_state(self,gpio = 17):
-        GPIO.setup(gpio, GPIO.OUT)
-        state = GPIO.input(gpio)
-        return state | False
-    
-    def toggle_pin(self,gpio = 17):
-        if self.pin_state(gpio=gpio):
-            self.turn_on_pin(gpio=gpio) 
-        else:
-            self.turn_off_pin(gpio=gpio)
-            
-if __name__ == "__main__":
+@app.route('/api/toggle')
+def api():
     gdc = GdoorControl()
-    gdc.toggle_pin(gpio=17)
-    
-    #led_pin = 17
-    #GPIO.setup(led_pin, GPIO.OUT)
+    # switch one is open
+    gdc.turn_off_pin(gdc.close.gpio)
+    gdc.turn_off_pin(gdc.open.gpio)
+    if not gdc.pin_state(gdc.switch1.gpio):
+        # open the door, leave the pin or open the door open until siwtch1 change to true
+        gdc.open_door()
+    else:
+        gdc.close_door()
+    return jsonify({"Message":"okr"})
 
-    #while True:
-    #    GPIO.output(led_pin, GPIO.HIGH) # turn on the LED
-    #    time.sleep(1/10)                   # wait for 1 second
-    #    GPIO.output(led_pin, GPIO.LOW)  # turn off the LED
-    #    time.sleep(1/10)                   # wait for 1 second
+if __name__ == "__main__":
+    app.run(debug = True,host='0.0.0.0', port=5000)
