@@ -25,11 +25,21 @@
 
       
           <div class="d-flex flex-column align-items-center justify-content-center" style="height: 100vh;">
-         <button class="btn btn-custom btn-outline-dark" onclick="toggle()">Abre</button>
+         <button class="btn btn-custom btn-outline-dark" id="toglebutton" onclick="toggle()">Abre</button>
+         <div class="row">
+            <div class="col-md-6">
+                
+                <span id="sw22"  class="badge text-bg-primary">Abierto</span>
+            </div>
+            <div class="col-md-6">
+                
+                <span id="sw10" class="badge text-bg-primary">Cerrado</span>
+            </div>
+         </div>
       </div>
       
-         
       
+         
 
  
       </main>
@@ -40,11 +50,43 @@
 
 <script>
     function toggle(){
+        $("#toglebutton").prop("disabled",true)
         $.get("/api/toggle",function(data){
             console.log(data)
+            $("#toglebutton").prop("disabled",false)
         })
     }
 
+    function offstate(sw){
+        
+        $("#sw"+sw).removeClass("text-bg-secondary").addClass("text-bg-success")
+       
+    }
+    function onstate(sw){
+        $("#sw"+sw).removeClass("text-bg-success").addClass("text-bg-primary")
+       
+    }
+    /*
+    setInterval(function () {
+        
+        $.get("/api/pin/state/10",function(data){
+            if (data ===  "False"){
+                onstate("10")
+            }else{
+                offstate("10")
+            }
 
+        })
+        
+        $.get("/api/pin/state/22",function(data){
+            if (data ===  "False"){
+                onstate("22")
+            }else{
+                offstate("22")
+            }
+        })
+
+    }, 5000);
+    */
 
 </script>

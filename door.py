@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 import time
 import random
 GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 class Actions:
     def __init__(self,gpio:int) -> None:
         self.gpio:int = gpio
@@ -12,10 +13,15 @@ class GdoorControl:
         self.open = Actions(17)
         self.close = Actions(27)
         self.switch1 = Actions(22)
-        self.switch2 = Actions(24)
+        self.switch2 = Actions(10)
+        self.actie_time = 5
         self.safe_time:float  = 1/10
-        self.safe_time_limit = int( 5 / self.safe_time ) # 5 seconds
+        self.safe_time_limit = int( self.actie_time / self.safe_time ) # 5 seconds
         self.counter_for_safe_limit = 5000
+        GPIO.setup(self.switch2.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(self.switch1.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+    
 
     def open_door(self):
         # when it aproximate the end will slow down the door until hitting the switch
@@ -23,9 +29,11 @@ class GdoorControl:
         getout = False
          #make sure pind closed is closed
         self.turn_off_pin(self.close.gpio)
+ 
         while(True):
             self.turn_on_pin(self.open.gpio)
-            if  self.pin_state(self.switch1.gpio) or getout :
+
+            if  self.switch_state(self.switch2.gpio) == True or getout :
                 self.turn_off_pin(self.open.gpio)
                 break
             time.sleep(1/1000)
@@ -36,7 +44,7 @@ class GdoorControl:
                 while(True):
                     counter_for_safe += 1
                     time.sleep(self.safe_time)
-                    if  self.pin_state(self.switch1.gpio):
+                    if  self.switch_state(self.switch2.gpio) ==  True:
                         self.turn_off_pin(self.open.gpio)
                         getout = True
                         break   
@@ -45,6 +53,10 @@ class GdoorControl:
                         getout = True
                         break
                     self.toggle_pin(self.open.gpio)
+                    time.sleep(self.safe_time)
+                    if  self.switch_state(self.switch2.gpio) == True:
+                        getout = True
+                        break                      
             self.turn_off_pin(self.open.gpio)
                 
 
@@ -56,7 +68,7 @@ class GdoorControl:
         self.turn_off_pin(self.open.gpio)
         while(True):
             self.turn_on_pin(self.close.gpio)
-            if  self.pin_state(self.switch2.gpio) or getout :
+            if  self.switch_state(self.switch1.gpio) == True or getout :
                 self.turn_off_pin(self.close.gpio)
                 break
             time.sleep(1/1000)
@@ -67,7 +79,7 @@ class GdoorControl:
                 while(True):
                     counter_for_safe += 1
                     time.sleep(self.safe_time)
-                    if  self.pin_state(self.switch2.gpio):
+                    if  self.switch_state(self.switch1.gpio) == True:
                         self.turn_off_pin(self.close.gpio)
                         getout = True
                         break   
@@ -75,7 +87,11 @@ class GdoorControl:
                         self.turn_off_pin(self.close.gpio)
                         getout = True
                         break
-                    self.toggle_pin(self.close.gpio)         
+                    self.toggle_pin(self.close.gpio) 
+                    time.sleep(self.safe_time)
+                    if  self.switch_state(self.switch1.gpio) == True:
+                        getout = True
+                        break                              
             self.turn_off_pin(self.close.gpio)
     
     def turn_off_pin(self,gpio):
@@ -116,7 +132,10 @@ class GdoorControl:
             if state:
                 time.sleep(1/500)
 
-
+    def switch_state(self,gpio):
+        if GPIO.input(gpio) == GPIO.HIGH:
+            return True
+        return False
 
 
 if __name__ == "__main__":
@@ -147,19 +166,15 @@ if __name__ == "__main__":
         switch 1 in 1 and switch 2 in 0  the door is opened
             proceed to activate realy conected to gpio open, deactivate when switch 2 change to 1
         """
+    GPIO.setup(gdc.switch2.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    GPIO.setup(gdc.switch1.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-    print(gdc.turn_off_pin(gdc.switch1.gpio))    
-    print(gdc.pin_state(gdc.switch1.gpio))
+    while True: # Run forever
+        if GPIO.input(gdc.switch2.gpio) == GPIO.HIGH:
+            print("closed!")
 
-    if not gdc.pin_state(gdc.switch1.gpio):
-        # open the door, leave the pin or open the door open until siwtch1 change to true
-        print("open")
-        gdc.open_door()
-    else:
+        if GPIO.input(gdc.switch1.gpio) == GPIO.HIGH:
+            print("opened!")
 
-        if gdc.pin_state(gdc.switch2.gpio):
-            # open the door, leave the pin or open the door open until siwtch1 change to true
-            print("close")
-            gdc.close_door()
-
+    
         
