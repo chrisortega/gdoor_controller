@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 import random
+import json
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 class Actions:
@@ -22,77 +23,52 @@ class GdoorControl:
         GPIO.setup(self.switch1.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
     
+    def deaceleration_routine(self,pin,switchpin):
+        on_time = 1/10
+        fz = .1
+        while(fz <= 1.5):   
+            if self.switch_state(switchpin) == True:
+                break    
+            self.turn_on_pin(pin)
+            time.sleep(on_time)
+            self.turn_off_pin(pin)
+            time.sleep(fz)
+            if self.switch_state(switchpin) == True:
+                break               
+            fz+=.1
 
-    def open_door(self):
+
+    def toggle_door(self,action = "open"):
+        divisor = 1000
+        seconds = 5
+        actions = {"open":self.open.gpio,"close":self.close.gpio}
+        action_pin = actions[action]
+        switchpin =self.switch2.gpio
         # when it aproximate the end will slow down the door until hitting the switch
         counter_for_safe = 0
         getout = False
          #make sure pind closed is closed
-        self.turn_off_pin(self.close.gpio)
- 
-        while(True):
-            self.turn_on_pin(self.open.gpio)
-
-            if  self.switch_state(self.switch2.gpio) == True or getout :
-                self.turn_off_pin(self.open.gpio)
-                break
-            time.sleep(1/1000)
-            counter_for_safe += 1 
-
-            if counter_for_safe > self.counter_for_safe_limit:
-                counter_for_safe = 0
-                while(True):
-                    counter_for_safe += 1
-                    time.sleep(self.safe_time)
-                    if  self.switch_state(self.switch2.gpio) ==  True:
-                        self.turn_off_pin(self.open.gpio)
-                        getout = True
-                        break   
-                    if counter_for_safe > self.safe_time_limit:                        
-                        self.turn_off_pin(self.open.gpio)
-                        getout = True
-                        break
-                    self.toggle_pin(self.open.gpio)
-                    time.sleep(self.safe_time)
-                    if  self.switch_state(self.switch2.gpio) == True:
-                        getout = True
-                        break                      
-            self.turn_off_pin(self.open.gpio)
-                
-
-    def close_door(self):
-        # when it aproximate the end will slow down the door until hitting the switch
-        counter_for_safe = 0
-        getout = False
-        #make sure pind open is closed
-        self.turn_off_pin(self.open.gpio)
-        while(True):
-            self.turn_on_pin(self.close.gpio)
-            if  self.switch_state(self.switch1.gpio) == True or getout :
-                self.turn_off_pin(self.close.gpio)
-                break
-            time.sleep(1/1000)
-            counter_for_safe += 1 
-
-            if counter_for_safe > self.counter_for_safe_limit:
-                counter_for_safe = 0
-                while(True):
-                    counter_for_safe += 1
-                    time.sleep(self.safe_time)
-                    if  self.switch_state(self.switch1.gpio) == True:
-                        self.turn_off_pin(self.close.gpio)
-                        getout = True
-                        break   
-                    if counter_for_safe > self.safe_time_limit:                        
-                        self.turn_off_pin(self.close.gpio)
-                        getout = True
-                        break
-                    self.toggle_pin(self.close.gpio) 
-                    time.sleep(self.safe_time)
-                    if  self.switch_state(self.switch1.gpio) == True:
-                        getout = True
-                        break                              
+        if action == "open":
             self.turn_off_pin(self.close.gpio)
+            switchpin =self.switch2.gpio
+        elif action == "close":
+            self.turn_off_pin(self.open.gpio)
+            switchpin =self.switch1.gpio
+
+        self.turn_on_pin(action_pin)
+        while(True):
+            if self.switch_state(switchpin) == True or counter_for_safe > divisor * seconds :
+                self.deaceleration_routine(action_pin,switchpin)
+                self.turn_off_pin(action_pin)
+                self.setstate(action) 
+                break        
+            counter_for_safe+=1   
+            time.sleep(1/divisor)
+
+
+        return
+
+
     
     def turn_off_pin(self,gpio):
         led_pin = gpio
@@ -136,6 +112,21 @@ class GdoorControl:
         if GPIO.input(gpio) == GPIO.HIGH:
             return True
         return False
+
+    def setstate(self,state):
+        f = open("state.json","w+")
+        f.write(json.dumps({"state":state}))
+        f.close()
+
+    def getstate(self):
+
+        try:
+            f = open("state.json", "r")
+            return json.loads(f.read())
+        except Exception as e:
+            self.setstate("na")
+            return self.getstate()
+            
 
 
 if __name__ == "__main__":

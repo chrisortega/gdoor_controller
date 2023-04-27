@@ -13,23 +13,30 @@
 
 <style>
     .btn-custom {
-  padding: 20px;
-  font-size: 100px;
+  padding: 30px;
+  font-size: 150px;
 }
 </style>
 <body>
 
+<nav class="navbar bg-body-tertiary">
+  <form class="container-fluid justify-content-start">
 
+    <button class="btn  btn-danger" onclick="cierra()" type="button">Cierra</button>
+    <button class="btn  btn-success"  onclick="abre()" type="button">Abre</button>
+  </form>
+</nav>
     <main>
    
 
       
           <div class="d-flex flex-column align-items-center justify-content-center" style="height: 100vh;">
-         <button class="btn btn-custom btn-outline-dark" id="toglebutton" onclick="toggle()">Abre</button>
+            <button class="btn btn-custom btn-primary" id="toglebutton" onclick="toggle()">Abre</button>
+      
          <div class="row">
             <div class="col-md-6">
                 
-                <span id="sw22"  class="badge text-bg-primary">Abierto</span>
+                <span id="sw22"  class="badge text-bg-primary" >Abierto</span>
             </div>
             <div class="col-md-6">
                 
@@ -39,6 +46,9 @@
       </div>
       
       
+      
+           
+
          
 
  
@@ -52,6 +62,21 @@
     function toggle(){
         $("#toglebutton").prop("disabled",true)
         $.get("/api/toggle",function(data){
+            console.log(data)
+            $("#toglebutton").prop("disabled",false)
+        })
+    }
+    function abre(){
+      
+        $("#toglebutton").prop("disabled",true)
+        $.get("/api/open",function(data){
+            console.log(data)
+            $("#toglebutton").prop("disabled",false)
+        })
+    }
+    function cierra(){
+        $("#toglebutton").prop("disabled",true)
+        $.get("/api/close",function(data){
             console.log(data)
             $("#toglebutton").prop("disabled",false)
         })
