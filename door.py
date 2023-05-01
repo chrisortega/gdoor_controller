@@ -18,15 +18,49 @@ class GdoorControl:
         self.actie_time = 5
         self.safe_time:float  = 1/10
         self.safe_time_limit = int( self.actie_time / self.safe_time ) # 5 seconds
+        self.panic_button = False
         self.counter_for_safe_limit = 5000
         GPIO.setup(self.switch2.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         GPIO.setup(self.switch1.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(self.switch1.gpio, GPIO.OUT)
+        GPIO.output(self.switch1.gpio, 0)       # set an output port/pin value to 1/HIGH/True           
+        GPIO.setup(self.switch2.gpio, GPIO.OUT)
+        GPIO.output(self.switch2.gpio, 0)       # set an output port/pin value to 1/HIGH/True          
+        self.actions = {"open":self.open.gpio,"close":self.close.gpio}
 
+    def reinit(self):
+        GPIO.setup(self.switch1.gpio, GPIO.OUT)
+        GPIO.output(self.switch1.gpio, 0)       # set an output port/pin value to 1/HIGH/True           
+        GPIO.setup(self.switch2.gpio, GPIO.OUT)
+        GPIO.output(self.switch2.gpio, 0)       # set an output port/pin value to 1/HIGH/True    
     
+
+    def any_sw(self):
+        return   (self.switch_state(self.switch1.gpio) or self.switch_state(self.switch2.gpio))
+
+    def calibration_routine(self,pin,switchpin,action):
+        on_time = 1/10
+        fz = .9
+        while( not self.switch_state(self.switch1.gpio) and  not self.switch_state(self.switch2.gpio)):
+            self.turn_on_pin(pin)
+            time.sleep(on_time)
+            if self.any_sw():
+                self.turn_off_pin(pin)
+                break
+            self.turn_off_pin(pin)
+            time.sleep(fz)
+            if self.any_sw():
+                self.turn_off_pin(pin)
+                break
+        self.setstate(action)   
+
     def deaceleration_routine(self,pin,switchpin):
         on_time = 1/10
         fz = .1
-        while(fz <= 1.5):   
+        while(fz <= 1):   
+            if self.getstate()['state'] == 'panic':
+                self.turn_off_pin(pin)         
+                break
             if self.switch_state(switchpin) == True:
                 break    
             self.turn_on_pin(pin)
@@ -39,10 +73,14 @@ class GdoorControl:
 
 
     def toggle_door(self,action = "open"):
+        if self.getstate()['state'] == 'lock':
+            return
+        self.setstate("lock")
         divisor = 1000
-        seconds = 5
-        actions = {"open":self.open.gpio,"close":self.close.gpio}
-        action_pin = actions[action]
+        seconds = 3.5
+        self.panic_button = False
+        
+        action_pin = self.actions[action]
         switchpin =self.switch2.gpio
         # when it aproximate the end will slow down the door until hitting the switch
         counter_for_safe = 0
@@ -56,19 +94,26 @@ class GdoorControl:
             switchpin =self.switch1.gpio
 
         self.turn_on_pin(action_pin)
+        
         while(True):
+            if self.getstate()['state'] == 'panic':
+                self.turn_off_pin(action_pin)
+                time.sleep(1)
+ 
+                break
             if self.switch_state(switchpin) == True or counter_for_safe > divisor * seconds :
                 self.deaceleration_routine(action_pin,switchpin)
                 self.turn_off_pin(action_pin)
-                self.setstate(action) 
+       
                 break        
             counter_for_safe+=1   
             time.sleep(1/divisor)
 
 
+        self.setstate(action)
         return
 
-
+    
     
     def turn_off_pin(self,gpio):
         led_pin = gpio
@@ -127,7 +172,19 @@ class GdoorControl:
             self.setstate("na")
             return self.getstate()
             
+    def panic_button_on(self):
+        GPIO.setup(self.switch1.gpio, GPIO.OUT)
+        GPIO.output(self.switch1.gpio, 1)       # set an output port/pin value to 1/HIGH/True  
+        GPIO.setup(self.switch2.gpio, GPIO.OUT)
+        GPIO.output(self.switch2.gpio, 1)       # set an output port/pin value to 1/HIGH/True  
 
+    def calibrate_sequence(self):
+        if self.getstate()['state'] == 'open':
+            self.calibration_routine(pin = self.actions["close"],switchpin=self.switch2.gpio,action = 'close')
+        elif self.getstate()['state'] == 'close':
+             self.calibration_routine(pin = self.actions["open"],switchpin=self.switch2.gpio,action = 'open')
+        else:
+            self.calibration_routine(pin = self.actions["open"],switchpin=self.switch2.gpio,action = 'open')   
 
 if __name__ == "__main__":
     gdc = GdoorControl()

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FlaskApp</title>
+    <title>Abre Puerta Garage</title>
     
     <link href="static/bootstrap.min.css"  rel="stylesheet"  >
     <script src="static/bootstrap.bundle.min.js"></script>
@@ -13,8 +13,16 @@
 
 <style>
     .btn-custom {
-  padding: 30px;
+
   font-size: 150px;
+  display: block;
+    margin: 10px 0;
+    padding: 10px;
+    width: 100%;
+
+}
+.col-md-12{
+    margin: 1px;;
 }
 </style>
 <body>
@@ -22,28 +30,34 @@
 <nav class="navbar bg-body-tertiary">
   <form class="container-fluid justify-content-start">
 
-    <button class="btn  btn-danger" onclick="cierra()" type="button">Cierra</button>
-    <button class="btn  btn-success"  onclick="abre()" type="button">Abre</button>
+
   </form>
 </nav>
     <main>
    
 
       
-          <div class="d-flex flex-column align-items-center justify-content-center" style="height: 100vh;">
-            <button class="btn btn-custom btn-primary" id="toglebutton" onclick="toggle()">Abre</button>
+        <section class="py-5 text-center container">
+            <div class="row ">
+             
+
+                <div class="row ">
+                    <div class="col-md-12">
+                        <button class="btn btn-custom btn-primary others" id="toglebutton" onclick="toggle()">Abre</button>
+                    </div>
+                    <div class="col-md-12">
+                        <button class="btn btn-custom btn-danger panic" id="panic" onclick="panic()">Alto</button>
+                    </div>
+                    <div class="col-md-12">
+                        <button class="btn btn-custom btn-dark panic" id="calibrate" onclick="calibrate()">Calb</button>
+                    </div>
       
-         <div class="row">
-            <div class="col-md-6">
-                
-                <span id="sw22"  class="badge text-bg-primary" >Abierto</span>
+                 </div>
             </div>
-            <div class="col-md-6">
-                
-                <span id="sw10" class="badge text-bg-primary">Cerrado</span>
-            </div>
-         </div>
-      </div>
+          </section>   
+           
+
+ 
       
       
       
@@ -60,25 +74,41 @@
 
 <script>
     function toggle(){
-        $("#toglebutton").prop("disabled",true)
+     
         $.get("/api/toggle",function(data){
             console.log(data)
-            $("#toglebutton").prop("disabled",false)
+           
         })
     }
+    function panic(){
+     
+     $.get("/api/panic",function(data){
+         console.log(data)
+        
+     })
+ }
+
+
+ function calibrate(){
+     
+     $.get("/api/calibrate",function(data){
+         console.log(data)
+        
+     })
+ }
     function abre(){
       
-        $("#toglebutton").prop("disabled",true)
+
         $.get("/api/open",function(data){
             console.log(data)
-            $("#toglebutton").prop("disabled",false)
+            
         })
     }
     function cierra(){
-        $("#toglebutton").prop("disabled",true)
+
         $.get("/api/close",function(data){
             console.log(data)
-            $("#toglebutton").prop("disabled",false)
+       
         })
     }
 
